@@ -1,1 +1,3 @@
 # rustbasic
+
+Run with WSL
