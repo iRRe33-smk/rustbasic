@@ -23,7 +23,7 @@ fn main() {
         verbose : bool
     }
     impl State {
-        fn make_guess(mut self, guess : String) -> (State){
+        fn make_guess(mut self, guess : String) -> State{
             let charvec: Vec<char> = guess.chars().collect::<Vec<_>>();
             if self.verbose {
                 println!("Incoming guess: {}",guess);
@@ -53,6 +53,52 @@ fn main() {
             return self;
         }
 
+        fn update_words(&self, mut possible_words : Vec<String>) -> Vec<String>{
+
+             //start with green
+             for g in &self.greens{
+                possible_words = possible_words.into_iter().filter(|x|{
+
+                    x.chars().nth(g.position).unwrap_or_default()==g.letter
+
+                }).collect::<Vec<String>>();
+            }
+            println!("{}",possible_words.len());
+
+            // grays
+            for c in &self.grays{
+                possible_words = possible_words.into_iter().filter(|x|{
+
+                    
+                    !x.contains(c.clone())
+
+                }).collect::<Vec<String>>();
+            }
+            println!("{}",possible_words.len());
+
+            //
+            for y in &self.yellows{
+                possible_words = possible_words.into_iter().filter(|x|{
+
+                    x.contains(y.letter.clone())
+
+                }).collect::<Vec<String>>();
+                
+            }
+            return possible_words;
+        }
+
+        fn select_best_guess(&self, possible_words : &Vec<String>) -> String{
+            let x = possible_words.first();
+            return match x {
+            None => {
+                println!("{}","select best guess failed!, returning 'error' as guess!");
+                "error".to_string()
+        },
+            Some(x) => x.to_string(),
+            }
+        }
+    
     }
 
     fn buildState(target : String) -> State {
@@ -61,7 +107,7 @@ fn main() {
             yellows : Vec :: <Yellow> :: new(),
             grays : Vec :: <char> :: new(),
             correct : target.chars().collect::<Vec<_>>(),
-            verbose : true
+            verbose : true 
          };
          return s
          
@@ -89,16 +135,16 @@ fn main() {
 
         
 
-        for w in &words{
-            println!("{}",w);
-        }
+        // for w in &words{
+        //     println!("{}",w);
+        // }
 
         let target = "wispy".to_string();
         
 
         let mut game:State = buildState(target);
 
-        println!("{:?}",game.correct);
+        println!("Looking for: {:?}",game.correct);
         
         let mut possible_words = words;
 
@@ -113,39 +159,13 @@ fn main() {
             if num_it == 0{
                 game = game.make_guess(startingGuess.clone());
             } else{
-                game = game.make_guess(possible_words[0].clone())
+                let guess : String = game.select_best_guess(&possible_words);
+                game = game.make_guess(guess);
+                // game = game.make_guess(possible_words[0].clone())
             }
+            possible_words = game.update_words(possible_words);
+
             
-            //start with green
-            for g in &game.greens{
-                possible_words = possible_words.into_iter().filter(|x|{
-
-                    x.chars().nth(g.position).unwrap_or_default()==g.letter
-
-                }).collect::<Vec<String>>();
-            }
-            println!("{}",possible_words.len());
-
-            // grays
-            for c in &game.grays{
-                possible_words = possible_words.into_iter().filter(|x|{
-
-                    
-                    !x.contains(c.clone())
-
-                }).collect::<Vec<String>>();
-            }
-            println!("{}",possible_words.len());
-
-            //
-            for y in &game.yellows{
-                possible_words = possible_words.into_iter().filter(|x|{
-
-                    x.contains(y.letter.clone())
-
-                }).collect::<Vec<String>>();
-                
-            }
             num_it+=1;
             if possible_words.len()<=1 || num_it>10{
                 done=true;
